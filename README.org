@@ -1,4 +1,11 @@
 * MRVA download
+  This repository provides two scripts to download CodeQL databases
+  given a partial url path of the form
+  : /repos/protocolbuffers/protobuf/code-scanning/codeql/databases/cpp
+  
+  The lists are from the same source as the CodeQL MRVA plugin.  They
+  are the top 1000 projects in cpp/java/python respectively.
+
   https://docs.github.com/en/rest/code-scanning/code-scanning?apiVersion=2022-11-28#get-a-codeql-database-for-a-repository
 
   - Single download
@@ -38,10 +45,12 @@
     #+END_SRC
 
   - Download
+    
+    Once per list:
     #+BEGIN_SRC sh 
-      for LANG in cpp python java; do
-          bin/download repos-$LANG
-      done
+    ./bin/download-all repos-cpp
+    ./bin/download-all repos-java
+    ./bin/download-all repos-python
     #+END_SRC
 
 
