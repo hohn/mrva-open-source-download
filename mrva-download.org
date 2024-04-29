@@ -16,3 +16,32 @@
     ../mrva-top-repos/cpp/top.json
     ../mrva-top-repos/python/top.json
     ../mrva-top-repos/java/top.json
+
+  - lists with partial download syntax
+    #+BEGIN_SRC sh 
+      jq '.repositories | .[] |.name'<  ../mrva-top-repos/cpp/top.json 
+      jq '.repositories | .[] |.name'<  \
+         ../mrva-top-repos/cpp/top.json |\
+          sed 's|"\(.*\)/\(.*\)"|\1 \2|g;'
+      S_LANGUAGE=cpp
+      jq '.repositories | .[] |.name'<  \
+         ../mrva-top-repos/$S_LANGUAGE/top.json |\
+          sed 's|"\(.*\)/\(.*\)"|/repos/\1/\2/code-scanning/codeql/databases/'$S_LANGUAGE'|g;' >\
+              repos-$S_LANGUAGE
+
+      for S_LANGUAGE in cpp python java; do
+          jq '.repositories | .[] |.name'<  \
+             ../mrva-top-repos/$S_LANGUAGE/top.json |\
+              sed 's|"\(.*\)/\(.*\)"|/repos/\1/\2/code-scanning/codeql/databases/'$S_LANGUAGE'|g;' >\
+                  repos-$S_LANGUAGE
+      done
+    #+END_SRC
+
+  - Download
+    #+BEGIN_SRC sh 
+      for LANG in cpp python java; do
+          bin/download repos-$LANG
+      done
+    #+END_SRC
+
+

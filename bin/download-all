@@ -1,0 +1,62 @@
+#!/bin/bash
+
+if [ $(basename $(pwd)) != mrva-open-source-download ] ; then
+    echo "Please run from mrva-open-source-download directory"
+    exit 1
+fi
+
+if [ $# -ne 1 ]; then
+    echo "Wrong number of arguments."
+    echo "Usage: $0 repo-list-file"
+    exit 1
+fi
+
+repos=$1
+
+outpath=no-such-path
+
+cleanup() {
+    echo "Caught an interrupt signal. Cleaning up..."
+
+    if [ $outpath != no-such-path ]; then
+        echo "Removing $outpath"
+        rm -fR "$outpath"
+    fi
+
+    echo "Cleanup completed."
+    exit 0
+}
+
+
+get-db () {
+    path=$1
+    
+    url=$(gh api \
+             -H "Accept: application/vnd.github+json" \
+             -H "X-GitHub-Api-Version: 2022-11-28" \
+             $path | jq -r '.url' )
+
+    relpath=.$path
+
+    if [ -d $relpath ] ; then
+        printf "Already exists: %s\n" $relpath
+    else
+        printf "Downloading %s/db.zip\n" "$relpath"
+        mkdir -p "$relpath"  
+
+        declare -g outpath="$relpath"/db.zip
+
+        curl -L \
+             -H "Accept: application/zip" \
+             -H "X-GitHub-Api-Version: 2022-11-28" \
+             -o "$outpath" \
+             $url
+    fi
+}
+
+trap cleanup SIGINT SIGTERM
+
+cat $repos | while read path; do
+    get-db $path
+done
+
