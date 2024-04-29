@@ -10,7 +10,7 @@
   https://docs.github.com/en/rest/code-scanning/code-scanning?apiVersion=2022-11-28#get-a-codeql-database-for-a-repository
   gives the two scripts [[./bin/download]] and [[./bin/download-all]]
 
-  The list to use are external; their converted forms are in =repos-*=.
+  The lists to use are external; their converted forms are in =repos-*=.
     # ../mrva-top-repos/cpp/top.json
     # ../mrva-top-repos/python/top.json
     # ../mrva-top-repos/java/top.json
