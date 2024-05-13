@@ -42,3 +42,19 @@
     #+END_SRC
 
 
+  If you run across a rate limit problem, there will be very small DBs.  Those can
+  be found and pruned via e.g.,
+  #+BEGIN_SRC sh 
+    export FIND=gfind
+
+    # Count small DBs
+    $FIND repos -name db.zip -size -2k -printf "%k\t\t%p\n"  | sort -n | wc -l
+
+    # Remove invalid downloads
+    $FIND repos -name db.zip -size -2k -printf "%k\t\t%p\n"  |sort -n |\
+        while read s f
+        do
+            rm "$f"
+        done
+
+  #+END_SRC
