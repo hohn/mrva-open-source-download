@@ -31,11 +31,6 @@ cleanup() {
 get-db () {
     path=$1
     
-    url=$(gh api \
-             -H "Accept: application/vnd.github+json" \
-             -H "X-GitHub-Api-Version: 2022-11-28" \
-             $path | jq -r '.url' )
-
     relpath=.$path
 
     if [ -f $relpath/db.zip ] ; then
@@ -46,11 +41,11 @@ get-db () {
 
         declare -g outpath="$relpath"/db.zip
 
-        curl -L \
-             -H "Accept: application/zip" \
-             -H "X-GitHub-Api-Version: 2022-11-28" \
-             -o "$outpath" \
-             $url
+        gh api \
+           -H "Accept: application/zip" \
+           -H "X-GitHub-Api-Version: 2022-11-28" \
+           $path > $outpath
+
     fi
 }
 
