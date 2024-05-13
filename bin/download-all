@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ $(basename $(pwd)) != mrva-open-source-download ] ; then
     echo "Please run from mrva-open-source-download directory"
@@ -38,8 +38,8 @@ get-db () {
 
     relpath=.$path
 
-    if [ -d $relpath ] ; then
-        printf "Already exists: %s\n" $relpath
+    if [ -f $relpath/db.zip ] ; then
+        printf "Already exists: %s\n" $relpath/db.zip
     else
         printf "Downloading %s/db.zip\n" "$relpath"
         mkdir -p "$relpath"  
