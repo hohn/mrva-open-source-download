@@ -58,3 +58,6 @@
         done
 
   #+END_SRC
+
+  After that, just re-run =./bindownload-all=.
+  
