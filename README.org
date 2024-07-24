@@ -36,9 +36,8 @@
 
   The download is done via 
     #+BEGIN_SRC sh 
-    ./bin/download-all repos-cpp
-    ./bin/download-all repos-java
-    ./bin/download-all repos-python
+      ~/work-gh/mrva/mrva-open-source-download/
+      ./bin/download-all repos-cpp && ./bin/download-all repos-java && ./bin/download-all repos-python
     #+END_SRC
 
 
