@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+if [ $(basename $(pwd)) != mrva-open-source-download ] ; then
+    echo "Please run from mrva-open-source-download directory"
+    exit 1
+fi
+
+if [ $# -ne 1 ]; then
+    echo "Wrong number of arguments."
+    echo "Usage: $0 repo-list-file"
+    exit 1
+fi
+
+repos=$1
+
+outpath=no-such-path
+
+cleanup() {
+    echo "Caught an interrupt signal. Cleaning up..."
+
+    if [ $outpath != no-such-path ]; then
+        echo "Removing $outpath"
+        rm -fR "$outpath"
+    fi
+
+    echo "Cleanup completed."
+    exit 0
+}
+
+
+clone-repo () {
+    orgname=$1
+    
+    git clone -- https://github.com/$p1 /mnt/data/mrva/mrva-open-source-download/clones-python/$p1
+
+}
+
+trap cleanup SIGINT SIGTERM
+
+cat $repos | while read path; do
+    p1=$(echo $path |
+             sed 's|/repos/\(.*\)/code-scanning/codeql/databases/python|\1|g;')
+
+    clone-repo $p1
+done
+
