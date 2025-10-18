@@ -49,9 +49,30 @@ get-db () {
     fi
 }
 
+get-sarif () {
+    path=$1
+    relpath=.$path
+
+    if [ -f $relpath/sarif.zip ] ; then
+        printf "Already exists: %s\n" "$relpath/sarif.zip"
+    else
+        printf "Downloading %s/sarif.zip\n" "$relpath"
+        mkdir -p "$relpath"
+
+        declare -g outpath="$relpath/sarif.zip"
+
+        gh api \
+           -H "Accept: application/zip" \
+           -H "X-GitHub-Api-Version: 2022-11-28" \
+           "$path" > "$outpath"
+    fi
+
+}
+
 trap cleanup SIGINT SIGTERM
 
 cat $repos | while read path; do
     get-db $path
+    get-sarif $path
 done
 
