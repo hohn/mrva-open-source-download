@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-
 if [ "$(basename "$(pwd)")" != "mrva-open-source-download" ] ; then
     echo "Please run from mrva-open-source-download directory"
     exit 1
