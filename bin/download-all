@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -euo errexit  # intentionally omit pipefail
+
+
 if [ "$(basename "$(pwd)")" != "mrva-open-source-download" ] ; then
     echo "Please run from mrva-open-source-download directory"
     exit 1
@@ -27,53 +30,71 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 
-get-db () {
-    path=$1
-    relpath=.$path
-
-    if [ -f "$relpath/db.zip" ]; then
-        printf "Already exists: %s\n" "$relpath/db.zip"
-        return
-    fi
-
-    printf "Downloading %s/db.zip\n" "$relpath"
-    mkdir -p "$relpath"
-
-    outpath="$relpath/db.zip"
-    gh api \
-        -H "Accept: application/zip" \
-        -H "X-GitHub-Api-Version: 2022-11-28" \
-        "$path" > "$outpath"
-}
-
-
-get-sarif () {
-    db_path=$1
-    # convert:
-    #   /repos/org/repo/code-scanning/codeql/databases/cpp
-    # → /repos/org/repo/code-scanning/analyses
-    sarif_base=$(echo "$db_path" | sed 's#/code-scanning/codeql/databases.*#/code-scanning/analyses#')
-    relpath=.$sarif_base
-
-    mkdir -p "$relpath"
-
-    # list analyses
-    gh api "$sarif_base" --jq '.[].id' | while read -r id; do
-        out="$relpath/$id.sarif"
-        if [ -f "$out" ]; then
-            printf "Already exists: %s\n" "$out"
-            continue
+gh_safe() {
+    local retries=5 delay=30
+    local cmd=("$@")
+    local attempt=1
+    while true; do
+        if "${cmd[@]}" 2>err.log; then
+            return 0
         fi
-        printf "Downloading %s -> %s\n" "$sarif_base/$id" "$out"
-        gh api \
-            -H "Accept: application/sarif+json" \
-            "$sarif_base/$id" > "$out"
+        status=$?
+        if grep -q "rate limit" err.log; then
+            if (( attempt < retries )); then
+                printf "Rate limit hit, retry %d/%d in %ds...\n" "$attempt" "$retries" "$delay"
+                sleep "$delay"
+                ((attempt++))
+                continue
+            fi
+        elif grep -q "HTTP 404" err.log; then
+            printf "Resource not found (404); skipping.\n"
+            return 1
+        fi
+        printf "gh api failed (exit %d), see err.log\n" "$status"
+        return "$status"
     done
 }
 
+get-db() {
+    path=$1
+    relpath=.$path
+    [ -f "$relpath/db.zip" ] && { printf "Already exists: %s\n" "$relpath/db.zip"; return; }
+    printf "Downloading %s/db.zip\n" "$relpath"
+    mkdir -p "$relpath"
+    outpath="$relpath/db.zip"
+    if ! gh_safe gh api \
+        -H "Accept: application/zip" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "$path" >"$outpath"; then
+        rm -f "$outpath"
+    fi
+}
+
+get-sarif() {
+    db_path=$1
+    sarif_base=$(echo "$db_path" | sed 's#/code-scanning/codeql/databases.*#/code-scanning/analyses#')
+    relpath=.$sarif_base
+    mkdir -p "$relpath"
+    if ! gh_safe gh api "$sarif_base" --jq '.[].id' >ids.txt; then
+        printf "No analyses listed for %s\n" "$sarif_base"
+        return
+    fi
+    while read -r id; do
+        [ -z "$id" ] && continue
+        out="$relpath/$id.sarif"
+        [ -f "$out" ] && { printf "Already exists: %s\n" "$out"; continue; }
+        printf "Downloading %s -> %s\n" "$sarif_base/$id" "$out"
+        gh_safe gh api \
+            -H "Accept: application/sarif+json" \
+            "$sarif_base/$id" >"$out" || rm -f "$out"
+    done <ids.txt
+}
+
+trap cleanup SIGINT SIGTERM
 
 cat "$repos" | while read -r path; do
     [ -z "$path" ] && continue
     get-db "$path"
     get-sarif "$path"
 done
+
