@@ -36,7 +36,7 @@
 
   The download is done via 
     #+BEGIN_SRC sh 
-      ~/work-gh/mrva/mrva-open-source-download/
+      cd /mnt/common/large-gpt-data/mrva-open-source-download/
       ./bin/download-all repos-cpp && ./bin/download-all repos-java && ./bin/download-all repos-python
     #+END_SRC
 
@@ -46,15 +46,20 @@
   #+BEGIN_SRC sh 
     export FIND=gfind
 
+    export FIND=find
+
+    # Count DBs
+    $FIND repos -name db.zip -size +2k -printf "%k\t\t%p\n"  | sort -n | wc -l
+
     # Count small DBs
     $FIND repos -name db.zip -size -2k -printf "%k\t\t%p\n"  | sort -n | wc -l
 
     # Remove invalid downloads
     $FIND repos -name db.zip -size -2k -printf "%k\t\t%p\n"  |sort -n |\
-        while read s f
-        do
-            rm "$f"
-        done
+	while read size file
+	do
+	    rm "$file"
+	done
 
   #+END_SRC
 
