@@ -175,3 +175,98 @@
   - update sarif-cli again
     #+BEGIN_SRC text
     #+END_SRC
+
+* Add sharded tree
+  1. repos/
+     - Canonical source
+     - This is where the actual state of the world lives.
+     - All writes go here
+     - Treat repos/ like a normal filesystem tree.
+
+  2. sharded/
+     - Physical storage mirror.
+     - Never touched by humans or algorithmic tools directly.
+     - Never edit it directly.
+
+  3. logical/
+     - *Read-only*, navigational view of the sharded tree.
+     - A clean semantic tree for:
+       + ls
+       + find
+       + grep
+       + codeql
+       + tools / scripts
+       + browsing
+       + interactive exploration
+       + testing algorithms
+
+     - You do not write here.
+     - You do not unzip here.
+     - You do not create new repos here.
+     - You do not modify files here.
+
+     - It is the “UI” of your filesystem
+
+  4. Run read-only or read-majority tools inside logical/.
+     But writes must be directed to repos/.  *Below the level of repos/org/,
+     the subtree is identical in both logical/ and repos/.* 
+     
+
+  In summary:
+  - =logical/= is the place for read-heavy operations
+  - once all info is collected, switch to =repos/= for *write* operations
+  - the paths, as strings, are identical below =repos/= and =logical/=, e.g.
+    #+BEGIN_SRC sh
+      $ ls logical/lz4
+      lz4  lz4-java  repos
+
+      0:$ ls repos/lz4
+      lz4  lz4-java
+    #+END_SRC
+
+
+
+
+  #+BEGIN_SRC sh 
+    # Common variables for reference
+    ORIGINAL="repos"             # original canonical tree
+    SHARDED="sharded"            # physical sharded storage
+    LOGICAL="logical"            # logical namespace you will test
+    SHARD_COUNT=4096             # number of shards (hex 000–FFF)
+    MAP="shard-map.txt"
+
+    # 
+    # produce sharded tree
+    cd ~/work-gh/mrva/mrva-open-source-download
+
+    sh bin/shard_allocator.sh > shard-map.txt
+
+    sh bin/hardlink_mirror.sh
+
+    sh bin/logical_tree_generator.sh 
+
+    #
+    # compare / test trees
+    # slow
+    sh bin/verify_repos_to_sharded.sh
+    # or
+    sh bin/verify_repos_to_sharded_fast.sh 
+
+    sh bin/verify_logical_symlinks.sh
+    sh bin/verify_directory_structure.sh
+  #+END_SRC
+
+* Update sharded tree
+  #+BEGIN_SRC sh 
+    echo "=== DETECT NEW ORGS ==="
+    sh ./bin/assign_new_orgs.sh
+
+    echo "=== MIRROR UPDATED ORGS ==="
+    sh ./bin/mirror_new_orgs.sh
+
+    echo "=== UPDATE LOGICAL TREE ==="
+    sh ./bin/logical_update.sh
+
+    echo "=== DONE ==="
+
+  #+END_SRC
