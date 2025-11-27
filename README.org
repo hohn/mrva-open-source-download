@@ -176,6 +176,79 @@
     #+BEGIN_SRC text
     #+END_SRC
 
+* File system performance comparisons
+  - ext4 :: 2m6
+    #+BEGIN_SRC sh 
+      cd ~/work-gh/mrva/mrva-open-source-download
+      echo -e "\n=== EXT4 Extraction Test ==="
+      time for db in repos/a*/*/code-scanning/codeql/databases/*/db.zip; do
+      [ -f "$db" ] && unzip -q "$db" -d /dev/shm/test-ext4-$$ && rm -rf /dev/shm/test-ext4-$$
+      done
+
+      real	2m6.891s
+      user	1m56.092s
+      sys	0m10.589s
+    #+END_SRC
+
+  - zfs :: 2m9
+    #+BEGIN_SRC sh 
+      cd ~/work-gh/mrva/mrva-open-source-download
+
+      echo -e "\n=== ZFS Extraction Test ==="
+      time for db in repos-zfs/a*/*/code-scanning/codeql/databases/*/db.zip; do
+          [ -f "$db" ] && unzip -q "$db" -d /dev/shm/test-zfs-$$ && rm -rf /dev/shm/test-zfs-$$
+      done
+
+      real	2m9.323s
+      user	1m55.707s
+      sys	0m13.389s
+    #+END_SRC
+
+  - parallel ext4 :: 0m22
+    #+BEGIN_SRC sh 
+      echo -e "\n=== Parallel EXT4 Test ==="
+      time find repos/a*/*/code-scanning/codeql/databases/*/db.zip 2>/dev/null | \
+        xargs -P 10 -I {} sh -c 'unzip -q {} -d /dev/shm/test-$$-$RANDOM && rm -rf /dev/shm/test-$$-$RANDOM'
+
+      real	0m22.546s
+      user	1m59.024s
+      sys	0m13.303s
+    #+END_SRC
+
+  - parallel zfs :: 0m22
+    #+BEGIN_SRC sh 
+      echo -e "\n=== Parallel ZFS Test ==="
+      time find repos-zfs/a*/*/code-scanning/codeql/databases/*/db.zip 2>/dev/null | \
+        xargs -P 10 -I {} sh -c 'unzip -q {} -d /dev/shm/test-$$-$RANDOM && rm -rf /dev/shm/test-$$-$RANDOM'
+
+      real	0m22.870s
+      user	1m58.716s
+      sys	0m16.716s
+    #+END_SRC
+
+  - Parallel XFS Test :: 0m22
+    #+BEGIN_SRC sh 
+      cd ~/work-gh/mrva/mrva-open-source-download
+
+      echo -e "\n=== Parallel XFS Test ==="
+      time find repos-xfs/a*/*/code-scanning/codeql/databases/*/db.zip 2>/dev/null | \
+          xargs -P 10 -I {} sh -c 'unzip -q {} -d /dev/shm/test-$$-$RANDOM && rm -rf /dev/shm/test-$$-$RANDOM'
+
+      real	0m22.327s
+      user	1m59.177s
+      sys	0m12.574s
+
+    #+END_SRC
+
+  - [ ] Sequential XFS Test :: who cares
+    #+BEGIN_SRC sh 
+      cd ~/work-gh/mrva/mrva-open-source-download
+
+      echo -e "\n=== XFS Extraction Test ==="
+      time for db in repos-xfs/a*/*/code-scanning/codeql/databases/*/db.zip; do
+          [ -f "$db" ] && unzip -q "$db" -d /dev/shm/test-xfs-$$ && rm -rf /dev/shm/test-xfs-$$
+      done
+    #+END_SRC
 * Add sharded tree
   1. repos/
      - Canonical source
