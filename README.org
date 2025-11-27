@@ -65,3 +65,113 @@
 
   After that, just re-run =./bin/download-all=.
   
+* Convert to CSV
+  - set up [[file:~/work-gh/sarif-cli/notes/quickstart.org::*sarif-cli quickstart][sarif-cli quickstart]]
+  - prepare sarif files
+    #+BEGIN_SRC sh 
+      cd /mnt/common/large-gpt-data/mrva-open-source-download
+
+      # starting list of sarif files
+      mkdir -p ts
+      find . -name '*.sarif' > ts/sarif-files
+
+      # Build a list of actual files to feed the runner
+      while read -r sf; do
+          if grep -q versionControlProvenance "$sf"; then
+              echo "$sf"
+          else
+              out="${sf}.1.sarif"
+              sarif-insert-vcp "$sf" > "$out"
+              echo "$out"
+          fi
+      done < ts/sarif-files | tee ts/sarif-files.final
+    #+END_SRC
+  - Feed them all to the runner
+    #+BEGIN_SRC sh 
+      pushd /mnt/common/large-gpt-data/mrva-open-source-download
+
+      # 
+      [ -f ts/sarif-files.final ] || echo "need file list"
+
+      # clean up
+      find . -name "*.sarif.scanlog" -exec rm {} \;
+
+
+      # 
+      sarif-extract-scans-runner --input-signature CLI - \
+                                 > /dev/null \
+                                 < ts/sarif-files.final &
+
+      # look for errors
+      rg -l -g "*.scanlog" -e 'Traceback.*most recent call last.*:' repos/
+
+      # examine them
+      tail -n 10 $(rg -l -g "*.scanlog" -e 'Traceback.*most recent call last.*:' repos/ |head -20)
+
+
+    #+END_SRC
+  - update sarif-cli again
+    #+BEGIN_SRC text
+      Option 2: Normalize input before typing
+
+      If you want to keep the schema frozen but auto-map the field names:
+
+      def normalize_run_fields(run):
+          if "conversion" in run and "columnKind" not in run:
+              run["columnKind"] = "utf8"
+          if "conversion" in run and "properties" not in run:
+              run["properties"] = run.pop("conversion")
+          return run
+
+      Then run:
+
+      normalize_run_fields(json_data["runs"][0])
+    #+END_SRC
+  - update sarif-cli again
+    #+BEGIN_SRC text
+      Traceback (most recent call last):
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/.venv-ubuserv/bin/sarif-extract-scans", line 123, in <module>
+          sarif_struct = signature.fillsig(args, sarif_struct, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 362, in fillsig
+          return fillsig_dict(args, elem, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 345, in fillsig_dict
+          final[key] = fillsig(args, val, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 364, in fillsig
+          return fillsig_list(args, elem, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 354, in fillsig_list
+          final.append(fillsig(args, el, context))
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 362, in fillsig
+          return fillsig_dict(args, elem, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 345, in fillsig_dict
+          final[key] = fillsig(args, val, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 362, in fillsig
+          return fillsig_dict(args, elem, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 345, in fillsig_dict
+          final[key] = fillsig(args, val, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 364, in fillsig
+          return fillsig_list(args, elem, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 354, in fillsig_list
+          final.append(fillsig(args, el, context))
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 362, in fillsig
+          return fillsig_dict(args, elem, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 345, in fillsig_dict
+          final[key] = fillsig(args, val, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 362, in fillsig
+          return fillsig_dict(args, elem, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 345, in fillsig_dict
+          final[key] = fillsig(args, val, context)
+        File "/mnt/common/home/hohn/work-gh/sarif-cli/sarif_cli/signature.py", line 368, in fillsig
+          raise Exception("Unknown element type", t, elem)
+      Exception: ('Unknown element type', <class 'NoneType'>, None)
+      ~
+    #+END_SRC
+  - update sarif-cli again
+    #+BEGIN_SRC text
+
+    #+END_SRC
+  - update sarif-cli again
+    #+BEGIN_SRC text
+    #+END_SRC
+  - update sarif-cli again
+    #+BEGIN_SRC text
+    #+END_SRC
