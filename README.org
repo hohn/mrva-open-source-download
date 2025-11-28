@@ -65,6 +65,9 @@
 
   After that, just re-run =./bin/download-all=.
   
+* TODO Repository selection via API
+  See [[file:bin/list-top-repos::import requests]]
+
 * Convert to CSV
   - set up [[file:~/work-gh/sarif-cli/notes/quickstart.org::*sarif-cli quickstart][sarif-cli quickstart]]
   - prepare sarif files
