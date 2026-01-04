@@ -62,10 +62,11 @@ get-db() {
     printf "Downloading %s/db.zip\n" "$relpath"
     mkdir -p "$relpath"
     outpath="$relpath/db.zip"
-    if ! gh_safe gh api \
-        -H "Accept: application/zip" \
-        -H "X-GitHub-Api-Version: 2022-11-28" \
-        "$path" >"$outpath"; then
+    if ! gh_safe curl -L \
+         -H "Accept: application/zip" \
+         -H "X-GitHub-Api-Version: 2022-11-28" \
+         "$path" -o "$outpath"
+    then
         rm -f "$outpath"
     fi
 }
